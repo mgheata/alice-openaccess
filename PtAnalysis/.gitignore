@@ -1,0 +1,4 @@
+/files.txt
+*.root
+/AliAnalysisTaskEx01_cxx.d
+/AliAnalysisTaskEx01_cxx.so

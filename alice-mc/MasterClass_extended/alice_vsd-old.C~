@@ -1,0 +1,2375 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+
+#include <TGFileDialog.h>
+#include <TRootHelpDialog.h>
+
+#include "TImage.h"
+#include "TRecorder.h"
+
+#include <TGClient.h>
+#include <TGFrame.h>
+#include <TGLayout.h>
+#include <TGSplitter.h>
+
+#include <TGLOverlayButton.h>
+
+#include <TLatex.h>
+#include <TVirtualFitter.h>
+
+#include <TG3DLine.h>
+#include <TAxis3D.h>
+#include <TStyle.h>
+#include <TLegend.h>
+#include <TF1.h>
+#include <TEveGValuators.h>
+#include <TGDoubleSlider.h>
+
+#include <TApplication.h>
+#include <TEveManager.h>
+#include <TEveEventManager.h>
+#include <TEveWindowManager.h>
+#include <TEveVSD.h>
+#include <TEveVSDStructs.h>
+
+#include <TCanvas.h>
+
+#include <TEveTrack.h>
+#include <TEveTrackPropagator.h>
+#include <TEveGeoShape.h>
+
+#include <TEveSelection.h>
+
+#include <TGLEmbeddedViewer.h>
+#include <TCanvas.h>
+#include <TParticlePDG.h>
+
+#include <TH1D.h>
+
+#include <TGTextEntry.h>
+
+#include <TGLabel.h>
+#include <TGComboBox.h>
+
+#include <TGTab.h>
+#include <TGButton.h>
+#include <TTimer.h>
+
+#include <TFile.h>
+#include <TKey.h>
+#include <TSystem.h>
+#include <TPRegexp.h>
+
+#include <TGNumberEntry.h>
+#include <TGLWidget.h>
+
+#include <TFileMerger.h>
+#include <TSystemDirectory.h>
+
+
+#include <TEveManager.h>
+
+#include <TEveViewer.h>
+#include <TGLViewer.h>
+
+#include <TEveScene.h>
+
+#include <TEveProjectionManager.h>
+#include <TEveProjectionAxes.h>
+#include <TEveProjectionAxesGL.h>
+
+#include <TEveBrowser.h>
+#include <TEveWindow.h>
+
+#include <TAxis3D.h>
+
+using namespace std;
+
+namespace
+{
+  const char *gMasterClassOutputData[] = {"MasterClass Output Data", "*.masterclass", 0, 0}; //for loading results
+}
+
+namespace
+{
+  const char *gMasterClassOutputPictue[] = {"MasterClass Histograms", "*.png", 0, 0}; //for loading results
+}
+
+//MultiView* gMultiView = 0;
+
+TH1D* gKMinvHist = 0;
+TH1D* gXMinvHist = 0;
+TH1D* gLMinvHist = 0;
+TH1D* gALMinvHist = 0;
+TH1D* gAllMinvHist = 0;
+
+TCanvas* pad1 = 0;
+TCanvas* pad2 = 0;
+
+TGCheckButton* gCheckVertex = 0;
+TGCheckButton* gCheckClusters = 0;
+TGCheckButton* gCheckITSClusters = 0;
+TGCheckButton* gCheckTPCClusters = 0;
+TGCheckButton* gCheckTRDClusters = 0;
+TGCheckButton* gCheckTOFClusters = 0;
+TGCheckButton* gCheckESDTracks = 0;
+TGCheckButton* gCheckV0s = 0;
+TGCheckButton* gCheckCascades = 0;
+
+TGLabel* gEventNumber = 0;
+
+TEveLine* pointingLine[10] = {0};
+TEveLine* pointingLine1[10] = {0};
+TEveLine* pointingLine2[10] = {0};
+TEveLine* guideX[12] = {0};
+TEveLine* guideY[14] = {0};
+TEveLine* guideZ[14] = {0};
+
+Int_t globalChoice = 0;
+Int_t globalMode = 0;
+Int_t globalDataset = 0;
+Int_t gLoads = 0;
+
+Int_t nV0Tracks = 0;
+Int_t nCascadeTracks = 0;
+
+Double_t pxPos[10] = {0};
+Double_t pyPos[10] = {0};
+Double_t pzPos[10] = {0};
+Double_t massPos[10] = {0};
+
+Double_t pxNeg[10] = {0};
+Double_t pyNeg[10] = {0};
+Double_t pzNeg[10] = {0};
+Double_t massNeg[10] = {0};
+
+Double_t pxPosCas[10] = {0};
+Double_t pyPosCas[10] = {0};
+Double_t pzPosCas[10] = {0};
+Double_t massPosCas[10] = {0};
+
+Double_t pxNegCas[10] = {0};
+Double_t pyNegCas[10] = {0};
+Double_t pzNegCas[10] = {0};
+Double_t massNegCas[10] = {0};
+
+Double_t pxBacCas[10] = {0};
+Double_t pyBacCas[10] = {0};
+Double_t pzBacCas[10] = {0};
+Double_t massBacCas[10] = {0};
+Double_t chargeBacCas[10] = {0};
+
+Double_t pxPosFound = 0;
+Double_t pyPosFound = 0;
+Double_t pzPosFound = 0;
+Double_t massPosFound = 0;
+
+Double_t pxNegFound = 0;
+Double_t pyNegFound = 0;
+Double_t pzNegFound = 0;
+Double_t massNegFound = 0;
+
+Int_t chargeNegFound = -1;
+Int_t chargePosFound = 1;
+
+Bool_t foundNeg = kFALSE;
+Bool_t foundPos = kFALSE;
+Bool_t teacher = kFALSE;
+
+Double_t pcaX[10] = {0};
+Double_t pcaY[10] = {0};
+Double_t pcaZ[10] = {0};
+
+Double_t pcaXCas[10] = {0};
+Double_t pcaYCas[10] = {0};
+Double_t pcaZCas[10] = {0};
+
+Double_t pcaXBacCas[10] = {0};
+Double_t pcaYBacCas[10] = {0};
+Double_t pcaZBacCas[10] = {0};
+
+Int_t detector = 0;
+Int_t geometry = 0;
+
+Int_t AC = 0;
+
+TString globalName1 = "";
+TString globalName2 = "";
+
+// Mass of particles in MeV
+Double_t gMassElecton = 0.000510998910;
+Double_t gMassMuon = 0.105658367;
+Double_t gMassPion = 0.13957018;
+Double_t gMassKaon = 0.493677;
+Double_t gMassProton = 0.938272013;
+
+Bool_t change = kTRUE;
+
+
+class TVSDReader
+{
+public:
+  // ----------------------------------------------------------
+  // File / Event Data
+  // ----------------------------------------------------------
+
+  TFile      *fFile;
+  TDirectory *fDirectory;
+
+  TObjArray  *fEvDirKeys;
+
+  TEveVSD    *fVSD;
+
+  Int_t       fMaxEv, fCurEv, fMaxR, fRAnim, fAnalysis1, fAnalysis2; 
+
+  Bool_t      fVertexLoaded, fITSClustersLoaded, fTPCClustersLoaded, fTRDClustersLoaded, fTOFClustersLoaded,  fClustersLoaded, fEsdTracksLoaded, fV0sLoaded, fCascadesLoaded, fGuidesLoaded, fGeometrySet, fInDemoMode;
+
+  // ----------------------------------------------------------
+  // Event visualization structures
+  // ----------------------------------------------------------
+
+  TEveTrackList *fTrackList;
+  TEveTrackList *fTrackListV0Neg;
+  TEveTrackList *fTrackListV0Pos;
+  TEveTrackList *fTrackListV0Mother;
+  TEveTrackList *fTrackListCascade;
+  TEveTrackList *fTrackListCascadeNeg;
+  TEveTrackList *fTrackListCascadePos;
+  TEveTrackList *fTrackListCascadeBachelor;
+  TEveTrackList *fTrackListCascadeMother;
+  TEveTrackList *fTrackListPointingV0;
+
+  TEvePointSet  *fPsVertex;
+  TEvePointSet  *fITSClusters;
+  TEvePointSet  *fTPCClusters;
+  TEvePointSet  *fTRDClusters;
+  TEvePointSet  *fTOFClusters;
+  TEvePointSet  *fPsV0;
+  TEvePointSet  *fPsCascade;
+
+  TTimer        *fTimer;
+
+  TGLOverlayButton*	obutton1;
+  TGLOverlayButton*	obutton2;
+  TGLOverlayButton*	obutton3;
+  TGLOverlayButton*	overlayButton;
+
+  TGTextEntry*		fAnalysis1TE;
+  TGTextEntry*		fAnalysis2TE;
+
+  TH1D*			fMinvHisto;
+  TCanvas*		fPad;
+  TEveGDoubleValuator*	fFitRangeGaus;
+  TEveGDoubleValuator*	fFitRangePoly;
+  TGPictureButton*	fResultButton1;
+  TGPictureButton*	fResultButton2;
+  TGPictureButton*	fResultButton3;
+  TGPictureButton*	fResultButton4;
+  TGPictureButton*	fResultButton5;
+  TGPictureButton*	fResultButton6;
+  TGPictureButton*	fResultButton7;
+  TGPictureButton*	fResultButton8;
+  TString		fResultPicture1;
+  TString		fResultPicture2;
+  TString		fResultPicture3;
+  TString		fResultPicture4;
+  TString		fResultPicture5;
+  TString		fResultPicture6;
+  TString		fResultPicture7;
+  TString		fResultPicture8;
+  TF1*			fFitGaus;
+  TF1*			fFitPolynomial;
+  TGComboBox		*fDataset1;
+  TGComboBox*           fSaveDir;
+  TGComboBox*           fLoadDir;
+  TGTextEntry*          fTeacherName;
+  TGComboBox *fComboBoxAntiLambda;
+  TGComboBox *fComboBoxK0;
+  TGComboBox *fComboBoxLambda;
+public:
+  TVSDReader(const char* file_name) :
+    fFile(0), fDirectory(0), fEvDirKeys(0),
+    fVSD(0),
+
+    fMaxEv(-1), fCurEv(-1), fMaxR(400), fRAnim(0), fAnalysis1(0), fAnalysis2(0), 
+
+    fVertexLoaded(kTRUE), fITSClustersLoaded(kFALSE), fTPCClustersLoaded(kFALSE), fTRDClustersLoaded(kFALSE),
+    fTOFClustersLoaded(kFALSE), fClustersLoaded(kTRUE), fEsdTracksLoaded(kTRUE), fV0sLoaded(kFALSE), fCascadesLoaded(kFALSE), fGuidesLoaded(kFALSE),
+    fGeometrySet(kTRUE), fInDemoMode(kFALSE),
+
+    fTrackList(0), fTrackListV0Neg(0), fTrackListV0Pos(0), fTrackListV0Mother(0),
+    fTrackListCascade(0), fTrackListCascadeNeg(0), fTrackListCascadePos(0), fTrackListCascadeBachelor(0), fTrackListCascadeMother(0),
+    fTrackListPointingV0(0),
+    fPsVertex(0), fITSClusters(0), fTPCClusters(0), fTRDClusters(0), fTOFClusters(0),
+    fPsV0(0), fPsCascade(0), fTimer(0),
+    obutton1(0), obutton2(0), obutton3(0), overlayButton(0),
+    fAnalysis1TE(0), fAnalysis2TE(0), fMinvHisto(0), fPad(0), fFitRangeGaus(0), fFitRangePoly(0),
+    fResultButton1(0), fResultButton2(0), fResultButton3(0), fResultButton4(0), 
+    fResultButton5(0), fResultButton6(0), fResultButton7(0), fResultButton8(0),
+    fResultPicture1(0), fResultPicture2(0), fResultPicture3(0), fResultPicture4(0),
+    fResultPicture5(0), fResultPicture6(0), fResultPicture7(0), fResultPicture8(0),
+    fFitGaus(0), fFitPolynomial(0), fDataset1(0), fSaveDir(0), fLoadDir(0), fTeacherName(0)
+
+  {
+    fFile = TFile::Open(file_name);
+    if (!fFile)
+      {
+	Error("VSD_Reader", "Can not open file '%s' ... terminating.", file_name);
+	gSystem->Exit(1);
+      }
+
+    fEvDirKeys = new TObjArray;
+    TPMERegexp name_re("Event\\d+");
+    TObjLink* lnk = fFile->GetListOfKeys()->FirstLink();
+    while (lnk)
+      {
+	if (name_re.Match(lnk->GetObject()->GetName()))
+	  {
+            fEvDirKeys->Add(lnk->GetObject());
+	  }
+	lnk = lnk->Next();
+      }
+
+    fMaxEv = fEvDirKeys->GetEntriesFast();
+    if (fMaxEv == 0)
+      {
+	Error("VSD_Reader", "No events to show ... terminating.");
+	gSystem->Exit(1);
+      }
+
+    fVSD = new TEveVSD;
+
+  }
+
+  virtual ~TVSDReader()
+  {
+    // Destructor.
+
+    DropEvent();
+
+    delete fVSD;
+    delete fEvDirKeys;
+
+    fFile->Close();
+    delete fFile;
+  }
+
+  void ToTeacher(){
+
+    DropEvent();
+
+    fInDemoMode = kFALSE;
+
+    delete fVSD;
+    delete fEvDirKeys;
+
+    fFile->Close();
+    delete fFile;
+
+    fFile = TFile::Open("eve_files/data/AliVSD_teacher.root");
+    if (!fFile)
+      {
+	Error("VSD_Reader", "Can not open the file ... terminating.");
+	gSystem->Exit(1);
+      }
+
+    fEvDirKeys = new TObjArray;
+    TPMERegexp name_re("Event\\d+");
+    TObjLink* lnk = fFile->GetListOfKeys()->FirstLink();
+    while (lnk)
+      {
+	if (name_re.Match(lnk->GetObject()->GetName()))
+	  {
+            fEvDirKeys->Add(lnk->GetObject());
+	  }
+	lnk = lnk->Next();
+      }
+
+    fMaxEv = fEvDirKeys->GetEntriesFast();
+    if (fMaxEv == 0)
+      {
+	Error("VSD_Reader", "No events to show ... terminating.");
+	gSystem->Exit(1);
+      }
+
+    fVSD = new TEveVSD;
+    fTimer = new TTimer();
+  
+    globalChoice = 2;
+    globalMode = 3;
+
+    fInDemoMode = kFALSE;
+
+    fVertexLoaded = kFALSE;
+      fEsdTracksLoaded = kTRUE;
+    fV0sLoaded = kFALSE;
+    fCascadesLoaded = kFALSE;
+    fGuidesLoaded = kFALSE;
+  
+    TeacherSet();
+
+    GotoEvent(0);
+
+  }
+
+  void ToDemo(){
+
+    DropEvent();
+
+    fInDemoMode = kTRUE;
+
+    globalChoice = 1;
+    globalMode = 1;
+
+    delete fVSD;
+    delete fEvDirKeys;
+
+    fFile->Close();
+    delete fFile;
+
+    fFile = TFile::Open("eve_files/data/AliVSD_example.root");
+    if (!fFile)
+      {
+	Error("VSD_Reader", "Can not open the demo file ... terminating.");
+	gSystem->Exit(1);
+      }
+
+    fEvDirKeys = new TObjArray;
+    TPMERegexp name_re("Event\\d+");
+    TObjLink* lnk = fFile->GetListOfKeys()->FirstLink();
+    while (lnk)
+      {
+	if (name_re.Match(lnk->GetObject()->GetName()))
+	  {
+            fEvDirKeys->Add(lnk->GetObject());
+	  }
+	lnk = lnk->Next();
+      }
+
+    fMaxEv = fEvDirKeys->GetEntriesFast();
+    if (fMaxEv == 0)
+      {
+	Error("VSD_Reader", "No events to show ... terminating.");
+	gSystem->Exit(1);
+      }
+
+
+    fVertexLoaded = kFALSE;
+    fITSClustersLoaded = kFALSE;
+    fTPCClustersLoaded = kFALSE;
+    fTRDClustersLoaded = kFALSE;
+    fTOFClustersLoaded = kFALSE;
+    fClustersLoaded = kFALSE;
+    fEsdTracksLoaded = kFALSE;
+    fV0sLoaded = kFALSE;
+    fCascadesLoaded = kFALSE;
+    fGuidesLoaded = kFALSE;
+    fGeometrySet = kTRUE;
+
+
+    fVSD = new TEveVSD;
+    fTimer = new TTimer();
+
+    GotoEvent(0);
+
+    gEve->FullRedraw3D();
+      
+  }
+
+  void ToStudent(){
+
+  
+
+    fInDemoMode = kFALSE;
+
+    globalChoice = 2;
+    globalMode = 2;
+
+  
+string fileIn;
+    switch(globalDataset)
+    {
+
+    case 1:
+      fileIn="dataset1.txt";
+      break;
+
+   
+	
+    default:
+     fileIn= "dataset1.txt";
+      break;
+
+    }
+
+    fEvDirKeys = new TObjArray;
+    TPMERegexp name_re("Event\\d+");
+    TObjLink* lnk = fFile->GetListOfKeys()->FirstLink();
+    while (lnk)
+      {
+	if (name_re.Match(lnk->GetObject()->GetName()))
+	  {
+            fEvDirKeys->Add(lnk->GetObject());
+	  }
+	lnk = lnk->Next();
+      }
+
+    fMaxEv = fEvDirKeys->GetEntriesFast();
+    if (fMaxEv == 0)
+      {
+	Error("VSD_Reader", "No events to show ... terminating.");
+	gSystem->Exit(1);
+      }
+
+    fVertexLoaded = kFALSE;
+    fEsdTracksLoaded = kTRUE;
+    fV0sLoaded = kFALSE;
+    fCascadesLoaded = kFALSE;
+    fGuidesLoaded = kFALSE;
+//    fGeometrySet = kTRUE;
+
+
+    fVSD = new TEveVSD;
+    fTimer = new TTimer();
+ //   fTimer->Connect("Timeout()", "TVSDReader", this, "AnimateEsdTracks()");
+
+    StudentSet();
+
+    //      GotoEvent(0);
+
+ //   gEve->FullRedraw3D();
+      
+  }
+
+  void Exit(){
+
+ //   gEve->GetBrowser()->UnmapWindow();
+    gSystem->CleanCompiledMacros();
+
+  }
+
+   void Instructions(){
+
+    if(globalMode == 3)
+      {
+
+	TRootHelpDialog* instructions = new TRootHelpDialog(gClient->GetRoot(), "TEACHER MODE INSTRUCTIONS", 700, 600);
+
+	instructions->SetText("\
+Welcome in the <Teacher> mode, here you can see the tools to merge and analyse\n\
+your students' results\n\n\
+\
+On the left hand side panel you can see four panels, called <Teacher Instructions>,\n\
+<Teacher Controls>, <Results> and <Encyclopaedia>:\n\n\
+\
+   Instructions - desribes how to operate the application in the <Teacher> mode\n\
+   Teacher controls - allows you to merge and analayze students' results.\n\
+      Get Files - this allows to get your students' results\n\
+      Save Histograms - saves histograms showing your students' results\n\
+   Results\n\
+      Level 1 - shows and interprets the analysis results in Level 1\n\
+      Level 2 - shows and interprets the analysis results in Level 2\n\n\
+Encyclopedia:\n\
+   ALICE detector - description of ALICE and its main components;\n\
+   V0 Decay Patterns - patterns of the particles you will be looking for;\n\
+   (NOTE: click on the pictures of the detectors/decays to get further\n\
+   information)\n\n\
+\
+In the bottom, there are main application control buttons:\n\
+   Student Mode - starts the application in the Student mode,\n\
+   Exit\n\n\
+\
+How to merge and analyze the students' results\n\n\
+\
+   1. Click the button <Get Files> and a window <Open> will appear.\n\
+   2. Find the result (filetype *.masterclass) and click <Open>. The result\n\
+      will be loaded. Repeat it for all the students' files\n\
+   3. Click on the tab <Merged Invariant Mass> (right-hand side) to see\n\
+      the invariant mass of the strange particles found by your students.\n\
+      Update the histograms by clicking on each of them.\n\
+   4. Click on the tab <Merged Rapidity> (right-hand side) to see see the\n\
+      rapidity distibutions\n\
+   5. Click <Save Histograms>, give the title of the pictures and <Save>\n\
+   6. Click <Level 1>. A table called <Strange Particle Statistics> appears\n\
+   7. Compare the pre-calculated results from Monte Carlo simulations with the\n\
+      results of your students. Do the results agree? Yes? No? What Does it mean?\n\
+   8. Close <Strange Particle Statistics> by clicking <Close>\n\
+   9. Click <Level 2>. A table called <Particle Ratios> appears. Compare the ratios\n\
+      of strange particles to pions in pre-calculated Monte Carlo data\n\
+      and your analysis.Do the ratios agree? Is there a strangeness enhancement?\n\
+   10. Click <Close>. The analysis is done!\n\n\
+\
+");
+        instructions->DontCallClose();
+	instructions->Popup();
+
+      }
+
+
+  }
+
+
+  void SetForAnalysis11() { fAnalysis1 = 1; fAnalysis1TE->SetText("charged"); }
+  void SetForAnalysis12() { fAnalysis1 = 2; fAnalysis1TE->SetText("positive"); }
+  void SetForAnalysis13() { fAnalysis1 = 3; fAnalysis1TE->SetText("negative"); }
+  void SetForAnalysis14() { fAnalysis1 = 4; fAnalysis1TE->SetText("pi(+)"); }
+  void SetForAnalysis15() { fAnalysis1 = 5; fAnalysis1TE->SetText("pi(-)"); }
+    //	KS: added K+/K- to the particle table	25.January.2011
+  void SetForAnalysis16() { fAnalysis1 = 6; fAnalysis1TE->SetText("K(+)"); }
+  void SetForAnalysis17() { fAnalysis1 = 7; fAnalysis1TE->SetText("K(-)"); }
+  void SetForAnalysis18() { fAnalysis1 = 8; fAnalysis1TE->SetText("p(+)"); }
+  void SetForAnalysis19() { fAnalysis1 = 9; fAnalysis1TE->SetText("p(-)"); }
+
+  void SetForAnalysis21() { fAnalysis2 = 1; fAnalysis2TE->SetText("charged"); }
+  void SetForAnalysis22() { fAnalysis2 = 2; fAnalysis2TE->SetText("positive"); }
+  void SetForAnalysis23() { fAnalysis2 = 3; fAnalysis2TE->SetText("negative"); }
+  void SetForAnalysis24() { fAnalysis2 = 4; fAnalysis2TE->SetText("pi(+)"); }
+  void SetForAnalysis25() { fAnalysis2 = 5; fAnalysis2TE->SetText("pi(-)"); }
+    // KS: added K+/K- to the particle table	25.January.2011
+  void SetForAnalysis26() { fAnalysis2 = 6; fAnalysis2TE->SetText("K(+)"); }
+  void SetForAnalysis27() { fAnalysis2 = 7; fAnalysis2TE->SetText("K(-)"); }	
+  void SetForAnalysis28() { fAnalysis2 = 8; fAnalysis2TE->SetText("p(+)"); }	
+  void SetForAnalysis29() { fAnalysis2 = 9; fAnalysis2TE->SetText("p(-)"); }	
+
+
+  void CombineV0Candidates()
+  {
+
+    if(AC<4) {
+    	AC=AC+1;
+	cout << AC << endl; }
+    else  {
+    	AC=1;
+	cout << AC <<endl; }	
+	
+    fPad->cd(AC);
+
+    fFitPolynomial = NULL;
+    fFitGaus = NULL;
+
+    fMinvHisto = new TH1D("Invariant Mass",Form("Invariant Mass of %s %s with V0",fAnalysis1TE->GetText(),fAnalysis2TE->GetText()),400,0.0,2.0);
+    fMinvHisto->SetLineColor(2);
+    fMinvHisto->GetXaxis()->SetTitle("Invariant Mass (GeV/c^{2})");
+    fMinvHisto->GetYaxis()->SetTitle("Counts");
+    fMinvHisto->SetFillColor(0);
+
+//    fMinvHisto->Reset();
+
+
+    Int_t maxEvent = fMaxEv;
+
+    for(Int_t nEvents = 0; nEvents < maxEvent; nEvents++)
+    {
+
+    if(nEvents%100 == 0) cout << "LOADED EVENT " << nEvents << endl;
+
+    LoadEvent(nEvents);
+
+    if(fVSD->fTreeV0)
+    {
+
+///      Int_t pdg;
+      TEveVector pPos;
+      TEveVector pNeg;
+      Double_t massN, massP;
+
+      Int_t nV0s = fVSD->fTreeV0->GetEntries();
+
+      for(Int_t i=0; i<nV0s; ++i)
+      {
+
+        fVSD->fTreeV0->GetEntry(i);
+
+        pPos = fVSD->fV0.fPPos;
+        pNeg = fVSD->fV0.fPNeg;
+
+       if((fAnalysis1 == fAnalysis2) && (fAnalysis2 > 1)) continue;
+
+       if(fAnalysis1 == 4 && fVSD->fV0.fDLabel[0] != 2) continue;
+       if(fAnalysis1 == 5 && fVSD->fV0.fDLabel[1] != 2) continue;
+
+       if(fAnalysis1 == 6 && fVSD->fV0.fDLabel[0] != 3) continue;
+       if(fAnalysis1 == 7 && fVSD->fV0.fDLabel[1] != 3) continue;
+
+       if(fAnalysis1 == 8 && fVSD->fV0.fDLabel[0] != 4) continue;
+       if(fAnalysis1 == 9 && fVSD->fV0.fDLabel[1] != 4) continue;
+
+       if(fAnalysis2 == 4 && fVSD->fV0.fDLabel[0] != 2) continue;
+       if(fAnalysis2 == 5 && fVSD->fV0.fDLabel[1] != 2) continue;
+
+       if(fAnalysis2 == 6 && fVSD->fV0.fDLabel[0] != 3) continue;
+       if(fAnalysis2 == 7 && fVSD->fV0.fDLabel[1] != 3) continue;
+
+       if(fAnalysis2 == 8 && fVSD->fV0.fDLabel[0] != 4) continue;
+       if(fAnalysis2 == 9 && fVSD->fV0.fDLabel[1] != 4) continue;
+
+//              KS: added break statements
+         switch(fVSD->fV0.fDLabel[0])
+         {
+           case 0: massP = gMassElecton; break;
+           case 1: massP = gMassMuon; break;
+           case 2: massP = gMassPion; break;
+           case 3: massP = gMassKaon; break;
+           case 4: massP = gMassProton; break;
+//		KS: edited case 5(mass of a K+/K-)		25th.January.2011
+           case 5: massP = gMassKaon; break;
+           default: massP = gMassPion;
+         }
+
+         Double_t energyP = TMath::Sqrt(pPos.fX*pPos.fX+pPos.fY*pPos.fY+pPos.fZ*pPos.fZ+massP*massP);
+
+//              KS: added break statements
+         switch(fVSD->fV0.fDLabel[1])
+         {
+           case 0: massN = gMassElecton; break;
+           case 1: massN = gMassMuon; break;
+           case 2: massN = gMassPion; break;
+           case 3: massN = gMassKaon; break;
+           case 4: massN = gMassProton; break;
+//		KS: edited case 5(mass of a K+/K-)		25th.January.2011
+           case 5: massN = gMassKaon; break;
+           default: massN = gMassPion;
+         }
+
+         Double_t energyN = TMath::Sqrt(pNeg.fX*pNeg.fX+pNeg.fY*pNeg.fY+pNeg.fZ*pNeg.fZ+massN*massN);
+
+         Double_t minv = TMath::Sqrt((energyP+energyN)*(energyP+energyN)-(pPos.fX+pNeg.fX)*(pPos.fX+pNeg.fX)-(pPos.fY+pNeg.fY)*(pPos.fY+pNeg.fY)-(pPos.fZ+pNeg.fZ)*(pPos.fZ+pNeg.fZ));
+
+         fMinvHisto->Fill(minv);
+
+      }
+    }
+    }
+
+    fMinvHisto->Draw();
+    fPad->Update();
+
+    GotoEvent(0);
+
+  }
+//---------------
+
+
+//void CombineAll11() { Combine11(kTRUE); }
+
+
+
+  void Combine100() { Combine(kFALSE); }
+
+void Combine(Bool_t allEvents)
+{
+	ifstream file;
+	Double_t minvK0=0, minvLambda=0, minvAntyLambda=0;
+
+  	
+	//	KS: added an overview of four different histograms		24th.January.2011
+    
+    	if(AC<4) {
+    	AC=AC+1;
+	cout << AC << endl; }
+    	else  {
+    	AC=1;
+	cout << AC <<endl; }	
+	
+    	fPad->cd(AC);
+
+    	fFitPolynomial = NULL;
+    	fFitGaus = NULL;
+
+	file.open("dataset1.txt");
+
+ 
+
+    	fMinvHisto = new TH1D("fMinvHisto","InvariantMass ",400,0.0,2.0);
+    	fMinvHisto->SetLineColor(2);
+    	fMinvHisto->GetXaxis()->SetTitle("Invariant Mass (GeV/c^{2})");
+    	fMinvHisto->GetYaxis()->SetTitle("Counts");
+   
+	while(!file.eof() )
+    	{
+		file>>minvLambda;
+		cout<<"masa inv : "<<minvLambda<<endl;
+     
+         	fMinvHisto->Fill(minvLambda);
+	}
+       
+
+   // }
+    //}
+
+    fMinvHisto->Draw();
+    fPad->Update(
+);
+
+    //GotoEvent(0);
+file.close();
+  }
+
+//________KASIA
+
+
+//--------------------------Kaon-------------------------
+void CombineAll11() { Combine11(kTRUE); }
+void Combine11(Bool_t allEvents)
+  {
+ifstream file;
+Double_t minvK0=0, minvLambda=0, minvAntyLambda=0;
+ //Int_t datasets;   
+    if(AC<4) {
+    	AC=AC+1;
+	cout << AC << endl; }
+    else  {
+    	AC=1;
+	cout << AC <<endl; }	
+	
+    fPad->cd(AC);
+
+    fFitPolynomial = NULL;
+    fFitGaus = NULL;
+
+
+if(fComboBoxK0->GetSelected()==0)
+{ file.open("pp-K0.txt");
+}
+else if(fComboBoxK0->GetSelected()==1)
+{ file.open("PbPb-K0.txt");
+}
+else if(fComboBoxK0->GetSelected()==2)
+{ file.open("dataset11.txt");
+}
+else if(fComboBoxK0->GetSelected()==3)
+{ file.open("dataset12.txt");
+}
+else if(fComboBoxK0->GetSelected()==4)
+{ file.open("dataset13.txt");
+}
+else if(fComboBoxK0->GetSelected()==5)
+{ file.open("dataset14.txt");
+}
+else if(fComboBoxK0->GetSelected()==6)
+{ file.open("dataset15.txt");
+}
+else if(fComboBoxK0->GetSelected()==7)
+{ file.open("dataset16.txt");
+}
+else if(fComboBoxK0->GetSelected()==8)
+{ file.open("dataset17.txt");
+}
+else if(fComboBoxK0->GetSelected()==9)
+{ file.open("dataset18.txt");
+}
+else if(fComboBoxK0->GetSelected()==10)
+{ file.open("dataset19.txt");
+}
+else if(fComboBoxK0->GetSelected()==11)
+{ file.open("dataset20.txt");
+}
+if(fComboBoxLambda->GetSelected()==0)
+{ file.open("pp-Lambda.txt");
+}
+else if(fComboBoxLambda->GetSelected()==1)
+{ file.open("PbPb-Lambda.txt");
+}
+else if(fComboBoxLambda->GetSelected()==2)
+{ file.open("dataset21.txt");
+}
+else if(fComboBoxLambda->GetSelected()==3)
+{ file.open("dataset22.txt");
+}
+else if(fComboBoxLambda->GetSelected()==4)
+{ file.open("dataset23.txt");
+}
+else if(fComboBoxLambda->GetSelected()==5)
+{ file.open("dataset24.txt");
+}
+else if(fComboBoxLambda->GetSelected()==6)
+{ file.open("dataset25.txt");
+}
+else if(fComboBoxLambda->GetSelected()==7)
+{ file.open("dataset26.txt");
+}
+else if(fComboBoxLambda->GetSelected()==8)
+{ file.open("dataset27.txt");
+}
+else if(fComboBoxLambda->GetSelected()==9)
+{ file.open("dataset28.txt");
+}
+else if(fComboBoxLambda->GetSelected()==10)
+{ file.open("dataset29.txt");
+}
+else if(fComboBoxLambda->GetSelected()==11)
+{ file.open("dataset30.txt");
+}
+if(fComboBoxAntiLambda->GetSelected()==0)
+{ file.open("pp-AntiLambda.txt");
+}
+else if(fComboBoxAntiLambda->GetSelected()==1)
+{ file.open("PbPb-AntiLambda.txt");
+}
+else if(fComboBoxAntiLambda->GetSelected()==2)
+{ file.open("dataset31.txt");
+}
+else if(fComboBoxAntiLambda->GetSelected()==3)
+{ file.open("dataset32.txt");
+}
+else if(fComboBoxAntiLambda->GetSelected()==4)
+{ file.open("dataset33.txt");
+}
+else if(fComboBoxAntiLambda->GetSelected()==5)
+{ file.open("dataset24.txt");
+}
+else if(fComboBoxAntiLambda->GetSelected()==6)
+{ file.open("dataset35.txt");
+}
+else if(fComboBoxAntiLambda->GetSelected()==7)
+{ file.open("dataset36.txt");
+}
+else if(fComboBoxAntiLambda->GetSelected()==8)
+{ file.open("dataset37.txt");
+}
+else if(fComboBoxAntiLambda->GetSelected()==9)
+{ file.open("dataset38.txt");
+}
+else if(fComboBoxAntiLambda->GetSelected()==10)
+{ file.open("dataset39.txt");
+}
+else if(fComboBoxAntiLambda->GetSelected()==11)
+{ file.open("dataset40.txt");
+}
+ else {cout<<"No file exist"<<endl;}
+        
+ if( file.good() == false )
+{
+   cout << "No file" << endl;
+	return;
+}
+    fMinvHisto = new TH1D("fMinvHisto","InvariantMass ",400,0.0,2.0);
+    fMinvHisto->SetLineColor(2);
+    fMinvHisto->GetXaxis()->SetTitle("Invariant Mass (GeV/c^{2})");
+    fMinvHisto->GetYaxis()->SetTitle("Counts");
+    fMinvHisto->SetFillColor(0);
+
+while(!file.eof() )
+    {
+file>>minvLambda;
+cout<<"masa inv : "<<minvLambda<<endl;
+    
+         fMinvHisto->Fill(minvLambda);
+
+       }
+       
+
+    fMinvHisto->Draw();
+    fPad->Update();
+
+file.close();
+  }
+
+
+//____________
+
+  void FitInvariantMass()
+  {
+    
+    Double_t MinRange = TMath::Min(fFitRangePoly->GetMin(),fFitRangeGaus->GetMin());
+    Double_t MaxRange = TMath::Max(fFitRangePoly->GetMax(),fFitRangeGaus->GetMax());
+
+    if (!fFitGaus) fFitGaus = new TF1("fitGaus","[0]*TMath::Gaus(x,[1],[2])+[3]*x*x+[4]*x+[5]",MinRange,MaxRange);
+    else fFitGaus->SetRange(MinRange,MaxRange);
+
+    fFitGaus->SetParameter(0,80.);
+    fFitGaus->SetParameter(1,0.5*(fFitRangeGaus->GetMin()+fFitRangeGaus->GetMax()));
+    fFitGaus->SetParameter(2,1.);
+    fFitGaus->SetParLimits(0,0.,TMath::Power(10.,9));    
+    fFitGaus->SetParLimits(1,fFitRangeGaus->GetMin(),fFitRangeGaus->GetMax());    
+    fFitGaus->SetParLimits(2,0.,(fFitRangeGaus->GetMax()-fFitRangeGaus->GetMin())/2.);
+
+    fFitGaus->SetLineColor(kGreen+1);
+    fMinvHisto->Fit(fFitGaus,"rme");
+
+    TLatex *labels2 = new TLatex();
+    labels2->SetTextSize(0.045);
+    labels2->SetTextColor(kBlack);
+    labels2->SetNDC(kTRUE);
+    Double_t LabelX = 0.5;
+    Double_t LabelY = 0.8;
+    Double_t LabelYstep = 0.05;
+      
+    Int_t Total_Fit = (Int_t)(fFitGaus->Integral(fFitRangeGaus->GetMin(),fFitRangeGaus->GetMax())/fMinvHisto->GetBinWidth(1));
+    Int_t Bck_Fit = (Int_t)(Background_Integral(fFitRangeGaus->GetMin(),fFitRangeGaus->GetMax())/fMinvHisto->GetBinWidth(1));
+
+    labels2->DrawLatex(LabelX, LabelY,Form("Total: %d",Total_Fit));
+    labels2->DrawLatex(LabelX, LabelY-LabelYstep,Form("Background: %d",Bck_Fit));
+    labels2->DrawLatex(LabelX, LabelY-2.*LabelYstep,Form("Signal: %d",Total_Fit-Bck_Fit));
+    labels2->DrawLatex(LabelX, LabelY-3.*LabelYstep,Form("Mean: %f#pm%f",fFitGaus->GetParameter(1)*1000., fFitGaus->GetParError(1)*1000.));
+    labels2->DrawLatex(LabelX, LabelY-4.*LabelYstep,Form("#sigma: %f#pm%f",fFitGaus->GetParameter(2)*1000., fFitGaus->GetParError(2)*1000.));
+    
+    if(!fFitPolynomial) fFitPolynomial = new TF1("fitPoly","[0]*x*x+[1]*x+[2]",MinRange,MaxRange);
+    else fFitPolynomial->SetRange(MinRange,MaxRange);
+    fFitPolynomial->SetParameter(0,fFitGaus->GetParameter(3));
+    fFitPolynomial->SetParameter(1,fFitGaus->GetParameter(4));
+    fFitPolynomial->SetParameter(2,fFitGaus->GetParameter(5));
+    fFitPolynomial->SetLineColor(kBlue+1);
+    fFitPolynomial->Draw("SAME");
+      
+    fPad->Update();
+  }
+    
+    Double_t Background_Integral(Double_t xmin, Double_t xmax) {
+    
+        return (xmax-xmin)*(fFitGaus->GetParameter(5)+fFitGaus->GetParameter(4)*(xmax+xmin)/2.)+(fFitGaus->GetParameter(3)*(TMath::Power(xmax,3) - TMath::Power(xmin,3))/3.);
+        
+    }
+
+
+  void LoadHist1() { LoadHist(1); };
+  void LoadHist2() { LoadHist(2); };
+  void LoadHist3() { LoadHist(3); };
+  void LoadHist4() { LoadHist(4); };
+
+  void LoadHist(Int_t pad)
+  {
+
+    TString species;
+
+    switch(fLoadDir->GetSelected())
+    {
+      case 1:
+        species = "K0s";
+        break;
+      case 2:
+        species = "Lambda";
+        break;
+      case 3:
+        species = "antiLambda";
+        break;
+      case 4:
+        species = "Phi";
+        break;
+      case 5:
+        species = "Xi";
+        break;
+      default:
+        species = "";
+        break;
+    }
+
+    TString path = gSystem->Getenv("ALICE_MASTERCLASS_DIR");
+    if (path.IsNull()) path = ".";
+	  
+    TString *baseDirPath = new TString(Form("%s/%s/lg_analysis/%s", path.Data(), fTeacherName->GetDisplayText().Data(), species.Data()));
+    TSystemDirectory *baseDir = new TSystemDirectory(".",baseDirPath->Data());      
+    gSystem->Exec("rm result.root");
+    TList *listOfFilesInBaseDir = baseDir->GetListOfFiles();
+    Int_t nFiles = listOfFilesInBaseDir->GetEntries();
+    TFileMerger *mer = new TFileMerger();
+    for(Int_t i = 0; i < nFiles; i++)
+    {
+      TSystemFile* currentFile = (TSystemFile*)listOfFilesInBaseDir->At(i);
+        cout << "list: " << currentFile->GetName() << endl;
+        if( strcmp(currentFile->GetName(), ".") == 0 ) continue;
+        if( strstr(currentFile->GetName(), ".root") == 0 ) continue;
+      if( strcmp(currentFile->GetName(), "..") == 0 ) continue;
+        if( strcmp(currentFile->GetName(), "result.root") == 0 ) continue;
+      mer->AddFile(currentFile->GetName());
+    }
+    mer->OutputFile("result.root");
+    mer->Merge();
+    delete mer;
+
+    TFile *f = new TFile(Form("%s/%s/lg_analysis/%s/result.root", path.Data(), fTeacherName->GetDisplayText().Data(), species.Data()));
+    
+    fMinvHisto = (TH1D*)f->Get("Invariant Mass");
+
+    switch(fLoadDir->GetSelected())
+    {
+      case 1:
+        fMinvHisto->SetTitle("K0s");
+        break;
+      case 2:
+        fMinvHisto->SetTitle("Lambda");
+        break;
+      case 3:
+        fMinvHisto->SetTitle("antiLambda");
+        break;
+      case 4:
+        fMinvHisto->SetTitle("Phi");
+        break;
+      case 5:
+        fMinvHisto->SetTitle("Xi");
+        break;
+      default:
+        fMinvHisto->SetTitle("");
+        break;
+    }
+    
+    fPad->cd(pad);
+    fMinvHisto->Draw();
+    fPad->Update();
+
+  }
+
+
+    void SaveHisto(Int_t pad_num)
+    {
+        
+        TString species;
+        
+        switch(fSaveDir->GetSelected())
+        {
+            case 1:
+                species = "K0s";
+                break;
+            case 2:
+                species = "Lambda";
+                break;
+            case 3:
+                species = "antiLambda";
+                break;
+            case 4:
+                species = "Phi";
+                break;
+            case 5:
+                species = "Xi";
+                break;
+            default:
+                species = "";
+                break;
+        }
+        
+        TString path = gSystem->Getenv("ALICE_MASTERCLASS_DIR");
+        if (path.IsNull()) path = ".";
+        
+        if(fPad->cd(1)->FindObject("Invariant Mass"))
+            cout << (static_cast<TH1D*>(fPad->cd(1)->FindObject("Invariant Mass")))->GetEntries() << endl;
+        (static_cast<TH1D*>(fPad->cd(pad_num)->FindObject("Invariant Mass")))->SaveAs(Form("%s/%s/lg_analysis/%s/%s%s.root",path.Data(), fTeacherName->GetDisplayText().Data(), species.Data(), globalName1.Data(), globalName2.Data()));
+        
+    }
+    void SaveHist1() { SaveHisto(1); }
+    void SaveHist2() { SaveHisto(2); }
+    void SaveHist3() { SaveHisto(3); }
+    void SaveHist4() { SaveHisto(4); }
+
+  void AutomaticMenu()
+  {
+
+    TEveBrowser* browser = gEve->GetBrowser();
+
+    browser->GetMainFrame()->SetWindowName(Form("ALICE MasterClass - STUDENT MODE ", globalName1.Data(),globalName2.Data()));
+
+    if(browser->GetTabRight()->GetTabTab(3))
+      browser->GetTabRight()->RemoveTab(3);
+
+    if(browser->GetTabRight()->GetTabTab(2))
+      browser->GetTabRight()->RemoveTab(2);
+
+    if(browser->GetTabLeft()->GetTabTab(1))
+      browser->GetTabLeft()->RemoveTab(1);
+
+  //  if(browser->GetTabLeft()->GetTabTab(0))
+     // browser->GetTabLeft()->RemoveTab(0);
+
+   // if(browser->GetTabBottom()->GetTabTab(0))
+     // browser->GetTabBottom()->RemoveTab(0);
+browser->CloseTab(0);
+    browser->StartEmbedding(TRootBrowser::kLeft);
+
+    TGMainFrame* frmMain = new TGMainFrame(gClient->GetRoot(), 1000, 600);
+   frmMain->SetWindowName("XX GUI");
+    frmMain->SetCleanup(kDeepCleanup);
+
+    TString icondir(TString::Format("%s/icons/", gSystem->Getenv("ROOTSYS")) );
+    TGPictureButton* b1 = 0;
+    TGTextButton* b = 0;
+    TGGroupFrame* gf = 0;
+    TGVerticalFrame* vf = 0;
+    TGHorizontalFrame* hf = 0;
+    ULong_t buttonRedColor;
+
+   
+//-------------------New GUI--------------------------
+  
+
+	gf = new TGGroupFrame(frmMain, "V0 Analysis:");
+
+    	vf = new TGVerticalFrame(gf, 200, 20, kFixedWidth);
+    	{
+
+    }
+   ULong_t ucolor;        // will reflect user color changes
+   gClient->GetColorByName("#ffffff",ucolor);
+
+   //K0 combo box
+   TGLabel *fLabel2353 = new TGLabel(vf,"K0");
+   fLabel2353->SetTextJustify(36);
+   fLabel2353->SetMargins(0,0,0,0);
+   fLabel2353->SetWrapLength(-1);
+   vf->AddFrame(fLabel2353, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+   fLabel2353->MoveResize(48,24,55,18);
+
+   fComboBoxK0 = new TGComboBox(vf,-1,kHorizontalFrame | kSunkenFrame | kDoubleBorder | kOwnBackground);
+   fComboBoxK0->AddEntry("pp ",0);
+   fComboBoxK0->AddEntry("Pb-Pb ",1);
+   fComboBoxK0->AddEntry("Pb-Pb 0-10% ",2);
+   fComboBoxK0->AddEntry("Pb-Pb 10-20% ",3);
+   fComboBoxK0->AddEntry("Pb-Pb 20-30% ",4);
+   fComboBoxK0->AddEntry("Pb-Pb 30-40% ",5);
+   fComboBoxK0->AddEntry("Pb-Pb 40-50% ",6);
+   fComboBoxK0->AddEntry("Pb-Pb 50-60% ",7);
+   fComboBoxK0->AddEntry("Pb-Pb 60-70% ",8);
+   fComboBoxK0->AddEntry("Pb-Pb 70-80% ",9);
+   fComboBoxK0->AddEntry("Pb-Pb 80-90% ",10);
+   fComboBoxK0->AddEntry("Pb-Pb 90-100% ",10);
+
+   fComboBoxK0->Resize(204,22);
+   fComboBoxK0->Select(-1);
+   vf->AddFrame(fComboBoxK0, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+   fComboBoxK0->MoveResize(32,48,204,22);
+   
+   gClient->GetColorByName("#ffffff",ucolor);
+
+   // Lambda combo box
+   TGLabel *fLabel2405 = new TGLabel(vf,"Lambda");
+   fLabel2405->SetTextJustify(36);
+   fLabel2405->SetMargins(0,0,0,0);
+   fLabel2405->SetWrapLength(-1);
+   vf->AddFrame(fLabel2405, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+   fLabel2405->MoveResize(48,80,55,18);
+   fComboBoxLambda = new TGComboBox(vf,-1,kHorizontalFrame | kSunkenFrame | kDoubleBorder | kOwnBackground);
+   fComboBoxLambda->AddEntry("pp ",0);
+   fComboBoxLambda->AddEntry("Pb-Pb ",1);
+   fComboBoxLambda->AddEntry("Pb-Pb 0-10% ",2);
+   fComboBoxLambda->AddEntry("Pb-Pb 10-20% ",3);
+   fComboBoxLambda->AddEntry("Pb-Pb 20-30% ",4);
+   fComboBoxLambda->AddEntry("Pb-Pb 30-40% ",5);
+   fComboBoxLambda->AddEntry("Pb-Pb 40-50% ",6);
+   fComboBoxLambda->AddEntry("Pb-Pb 50-60% ",7);
+   fComboBoxLambda->AddEntry("Pb-Pb 60-70% ",8);
+   fComboBoxLambda->AddEntry("Pb-Pb 70-80% ",9);
+   fComboBoxLambda->AddEntry("Pb-Pb 80-90% ",10);
+   fComboBoxLambda->AddEntry("Pb-Pb 90-100% ",11);
+   fComboBoxLambda->Resize(204,22);
+   fComboBoxLambda->Select(-1);
+   vf->AddFrame(fComboBoxLambda, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+   fComboBoxLambda->MoveResize(32,104,204,22);
+
+   gClient->GetColorByName("#ffffff",ucolor);
+   
+   // AntiLambda combo box
+   TGLabel *fLabel2465 = new TGLabel(vf,"AntiLambda");
+   fLabel2465->SetTextJustify(36);
+   fLabel2465->SetMargins(0,0,0,0);
+   fLabel2465->SetWrapLength(-1);
+   vf->AddFrame(fLabel2465, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+   fLabel2465->MoveResize(48,136,55,18);
+   fComboBoxAntiLambda = new TGComboBox(vf,-1,kHorizontalFrame | kSunkenFrame | kDoubleBorder | kOwnBackground);
+   fComboBoxAntiLambda->AddEntry("pp ",0);
+   fComboBoxAntiLambda->AddEntry("Pb-Pb ",1);
+   fComboBoxAntiLambda->AddEntry("Pb-Pb 0-10% ",2);
+   fComboBoxAntiLambda->AddEntry("Pb-Pb 10-20% ",3);
+   fComboBoxAntiLambda->AddEntry("Pb-Pb 20-30% ",4);
+   fComboBoxAntiLambda->AddEntry("Pb-Pb 30-40% ",5);
+   fComboBoxAntiLambda->AddEntry("Pb-Pb 40-50% ",6);
+   fComboBoxAntiLambda->AddEntry("Pb-Pb 50-60% ",7);
+   fComboBoxAntiLambda->AddEntry("Pb-Pb 60-70% ",8);
+   fComboBoxAntiLambda->AddEntry("Pb-Pb 70-80% ",9);
+   fComboBoxAntiLambda->AddEntry("Pb-Pb 80-90% ",10);
+   fComboBoxAntiLambda->AddEntry("Pb-Pb 90-100% ",11);
+   fComboBoxAntiLambda->Resize(204,22);
+   fComboBoxAntiLambda->Select(-1);
+   vf->AddFrame(fComboBoxAntiLambda, new TGLayoutHints(kLHintsLeft | kLHintsTop,2,2,2,2));
+   fComboBoxAntiLambda->MoveResize(32,160,204,22);
+   b = new TGTextButton( vf, "Load Histogram");
+   b->Connect("Clicked()", "TVSDReader", this, "CombineAll11()");
+   vf->AddFrame(b, new TGLayoutHints(kLHintsExpandX));
+
+  
+    gf->AddFrame(vf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+    frmMain->AddFrame(gf);
+
+
+
+
+//------------------------------------------------
+    gf = new TGGroupFrame(frmMain, "Fit");
+
+    vf = new TGVerticalFrame(gf, 200, 20, kFixedWidth);
+    {
+
+      hf = new TGHorizontalFrame(vf, 200, 20, kFixedWidth);
+
+      vf->AddFrame(hf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 5, 5, 5, 5));
+
+      hf = new TGHorizontalFrame(vf, 200, 20, kFixedWidth);
+      {
+
+        fFitRangePoly = new TEveGDoubleValuator(hf,"Bkg range:", 40, 0);
+        fFitRangePoly->SetNELength(5);
+        fFitRangePoly->SetLabelWidth(70);
+        fFitRangePoly->Build();
+        fFitRangePoly->GetSlider()->SetWidth(190);
+        fFitRangePoly->SetLimits(0.0, 2.0, TGNumberFormat::kNESRealThree);
+        fFitRangePoly->SetValues(0.0, 2.0, TGNumberFormat::kNESRealThree);
+
+        hf->AddFrame(fFitRangePoly, new TGLayoutHints(kLHintsExpandX));
+
+      }
+
+      vf->AddFrame(hf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 5, 5, 5, 5));
+
+      hf = new TGHorizontalFrame(vf, 200, 20, kFixedWidth);
+      {
+
+        fFitRangeGaus = new TEveGDoubleValuator(hf,"Sig range:", 40, 0);
+        fFitRangeGaus->SetNELength(5);
+        fFitRangeGaus->SetLabelWidth(70);
+        fFitRangeGaus->Build();
+        fFitRangeGaus->GetSlider()->SetWidth(190);
+        fFitRangeGaus->SetLimits(0.0, 2.0, TGNumberFormat::kNESRealThree);
+        fFitRangeGaus->SetValues(0.0, 2.0, TGNumberFormat::kNESRealThree);
+
+        hf->AddFrame(fFitRangeGaus, new TGLayoutHints(kLHintsExpandX));
+
+      }
+
+      vf->AddFrame(hf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 5, 5, 5, 5));
+
+        hf = new TGHorizontalFrame(vf, 200, 20, kFixedWidth);
+        {
+            b = new TGTextButton(hf, "Fit signal+background");
+            b->Connect("Clicked()", "TVSDReader", this, "FitInvariantMass()");
+            hf->AddFrame(b, new TGLayoutHints(kLHintsExpandX));
+        }
+        
+        vf->AddFrame(hf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 5, 5, 5, 5));
+        
+    }
+
+    gf->AddFrame(vf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+    frmMain->AddFrame(gf);
+
+    gf = new TGGroupFrame(frmMain, "Save results");
+
+    vf = new TGVerticalFrame(gf, 200, 20, kFixedWidth);
+    {
+
+      hf = new TGHorizontalFrame(vf, 200, 20, kFixedWidth);
+      {
+
+        TGHorizontalFrame *hframe = new TGHorizontalFrame(hf, 40, 20, kFixedWidth);
+        {
+
+          b = new TGTextButton(hframe, "1");
+          b->Connect("Clicked()", "TVSDReader", this, "SaveHist1()");
+          hframe->AddFrame(b, new TGLayoutHints(kLHintsExpandX));
+
+          b = new TGTextButton(hframe, "2");
+          b->Connect("Clicked()", "TVSDReader", this, "SaveHist2()");
+          hframe->AddFrame(b, new TGLayoutHints(kLHintsExpandX));
+
+        }
+
+        hf->AddFrame(hframe);//, new TGLayoutHints(kLHintsExpandX));
+
+        hframe = new TGHorizontalFrame(hf, 160, 20, kFixedWidth);
+        {
+
+          fSaveDir = new TGComboBox(hframe);
+          fSaveDir->AddEntry("K0s", 1);
+          fSaveDir->AddEntry("Lambda", 2);
+          fSaveDir->AddEntry("antiLambda", 3);
+          fSaveDir->AddEntry("Phi", 4);
+          fSaveDir->AddEntry("V0", 5);
+          fSaveDir->Resize(100,20);
+          hframe->AddFrame(fSaveDir, new TGLayoutHints(kLHintsExpandX));
+        }
+
+        hf->AddFrame(hframe, new TGLayoutHints(kLHintsExpandX));
+
+      }
+        
+      vf->AddFrame(hf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+      hf = new TGHorizontalFrame(vf, 200, 20, kFixedWidth);
+      {
+
+        TGHorizontalFrame* hframe = new TGHorizontalFrame(hf, 40, 20, kFixedWidth);
+        {
+
+          b = new TGTextButton(hframe, "3");
+          b->Connect("Clicked()", "TVSDReader", this, "SaveHist3()");
+          hframe->AddFrame(b, new TGLayoutHints(kLHintsExpandX));
+
+          b = new TGTextButton(hframe, "4");
+          b->Connect("Clicked()", "TVSDReader", this, "SaveHist4()");
+          hframe->AddFrame(b, new TGLayoutHints(kLHintsExpandX));
+
+        }
+
+        hf->AddFrame(hframe);//, new TGLayoutHints(kLHintsExpandX));
+
+        hframe = new TGHorizontalFrame(hf, 160, 20, kFixedWidth);
+        {
+
+          fTeacherName = new TGTextEntry(hframe, "Teacher");
+          fTeacherName->SetEnabled(kTRUE);
+          fTeacherName->SetAlignment(kTextCenterX);
+          hframe->AddFrame(fTeacherName, new TGLayoutHints(kLHintsExpandX));
+
+        }
+
+        hf->AddFrame(hframe, new TGLayoutHints(kLHintsExpandX));
+
+      }
+        
+      vf->AddFrame(hf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+    }
+
+    gf->AddFrame(vf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+    frmMain->AddFrame(gf);
+
+  
+
+    frmMain->MapSubwindows();
+    frmMain->Resize();
+    frmMain->MapWindow();
+
+    browser->StopEmbedding("Student");
+
+    browser->StartEmbedding(TRootBrowser::kBottom);
+
+    frmMain = new TGMainFrame(gClient->GetRoot(), 1000, 600, kHorizontalFrame);
+    frmMain->SetWindowName("XX GUI");
+    frmMain->SetCleanup(kDeepCleanup);
+
+    //   hf = new TGHorizontalFrame(frmMain);
+
+    const TGFont *font = gClient->GetFont("-*-helvetica-bold-r-normal-*-20-*-*-*-*-*-*-*");
+    FontStruct_t buttonFont = font->GetFontStruct();
+
+    gClient->GetColorByName("red", buttonRedColor);
+    b = new TGTextButton(frmMain,"Exit");
+    b->SetTextColor(buttonRedColor);
+    b->SetFont(buttonFont);
+    //   hf->AddFrame(b, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY , 1, 1, 1, 1));
+    b->Connect("Clicked()", "TApplication", gApplication, "Terminate()");
+
+    frmMain->AddFrame(b, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY , 1, 1, 1, 1));
+
+    frmMain->MapSubwindows();
+    frmMain->Resize();
+    frmMain->MapWindow();
+
+    browser->StopEmbedding(" ");
+
+    browser->StartEmbedding(TRootBrowser::kRight);
+
+    fPad = new TCanvas();
+    fPad->Divide(2, 2);
+    fPad->cd(1);
+
+    fMinvHisto = new TH1D("Invariant Mass","Invariant Mass",400,0.0,2.0);
+
+    if(AC<=4) {
+    	AC=AC+1; 
+	cout << AC << endl;}
+//	KS: added a loop-function for the histograms	24th.January.2011
+	
+    else {
+    	AC=1; 
+	cout << AC << endl;}
+
+    fPad->cd(AC);
+    fMinvHisto->SetLineColor(2);
+    fMinvHisto->GetXaxis()->SetTitle("Invariant Mass (GeV/c^{2})");
+    fMinvHisto->GetYaxis()->SetTitle("Counts");
+    fMinvHisto->SetFillColor(0);
+
+    //fMinvHisto->Draw();
+    //fPad->Draw();
+
+    browser->StopEmbedding("Invariant Mass Distibution");
+
+   browser->GetTabRight()->SetTab(2);
+
+  }
+
+ void StudentSet(){
+
+    if(globalMode == 3)
+    {
+
+        globalMode = 2;
+        globalChoice = 2;
+
+     }
+	AutomaticMenu();
+
+  }
+
+  void TeacherSet(){
+
+    TEveBrowser* browser = gEve->GetBrowser();
+
+    browser->GetMainFrame()->SetWindowName("ALICE MasterClass - TEACHER MODE");
+
+    if(browser->GetTabRight()->GetTabTab(3))
+      browser->GetTabRight()->RemoveTab(3);
+
+    if(browser->GetTabRight()->GetTabTab(2))
+      browser->GetTabRight()->RemoveTab(2);
+
+   if(browser->GetTabLeft()->GetTabTab(0))
+      browser->GetTabLeft()->RemoveTab(0);
+
+    //if(browser->GetTabLeft()->GetTabTab(1))
+    //  browser->GetTabLeft()->RemoveTab(1);
+
+    //if(browser->GetTabBottom()->GetTabTab(0))
+     // browser->GetTabBottom()->RemoveTab(0);
+
+    browser->StartEmbedding(TRootBrowser::kRight);
+
+    fPad = new TCanvas();
+    fPad->Divide(2, 2);
+    fPad->cd(1);
+
+    browser->StopEmbedding("Invariant Mass Distibution");
+
+    browser->StartEmbedding(TRootBrowser::kLeft);
+
+    TString icondir(TString::Format("%s/icons/", gSystem->Getenv("ROOTSYS")) );
+    TGPictureButton* b1 = 0;
+    TGTextButton* b = 0;
+    TGGroupFrame* gf = 0;
+    TGVerticalFrame* vf = 0;
+    TGHorizontalFrame* hf = 0;
+    ULong_t buttonRedColor;
+
+    TGMainFrame* frmMain = new TGMainFrame(gClient->GetRoot(), 1000, 600);
+    frmMain->SetWindowName("XX GUI");
+    frmMain->SetCleanup(kDeepCleanup);
+
+    gf = new TGGroupFrame(frmMain, "Teacher Instructions");
+
+    vf = new TGVerticalFrame(gf, 200, 20, kFixedWidth);
+
+    {
+
+      const TGFont *font = gClient->GetFont("-*-times-bold-r-*-*-16-*-*-*-*-*-*-*");
+      FontStruct_t buttonFont = font->GetFontStruct();
+      gClient->GetColorByName("red", buttonRedColor);
+      b = new TGTextButton(vf,"Instructions");
+      b->SetTextColor(buttonRedColor);
+      b->SetFont(buttonFont);
+      vf->AddFrame(b, new TGLayoutHints(kLHintsExpandX, 1, 1, 1, 1));
+      b->Connect("Clicked()", "TVSDReader", this, "Instructions()");
+
+    }
+
+    gf->AddFrame(vf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+    frmMain->AddFrame(gf);
+
+    gf = new TGGroupFrame(frmMain, "Navigate");
+
+    vf = new TGVerticalFrame(gf, 200, 20, kFixedWidth);
+    {
+
+      hf = new TGHorizontalFrame(vf, 200, 20, kFixedWidth);
+      {
+
+	TGLabel* label = new TGLabel(hf, "Previous");
+	hf->AddFrame(label, new TGLayoutHints(kLHintsExpandX, 1, 1, 1, 1));
+
+	label = new TGLabel(hf, "Current");
+	hf->AddFrame(label, new TGLayoutHints(kLHintsExpandX, 1, 1, 1, 1));
+
+	label = new TGLabel(hf, "Next");
+	hf->AddFrame(label, new TGLayoutHints(kLHintsExpandX, 1, 1, 1, 1));
+
+      }
+
+      vf->AddFrame(hf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+      hf = new TGHorizontalFrame(vf, 200, 20, kFixedWidth);
+      {
+
+	b1 = new TGPictureButton(hf, gClient->GetPicture(icondir + "GoBack.gif"));
+	hf->AddFrame(b1, new TGLayoutHints(kLHintsExpandX, 1, 1, 1, 1));
+	b1->Connect("Clicked()", "TVSDReader", this, "PrevEvent()");
+
+	gEventNumber = new TGLabel(hf);
+	gEventNumber->SetText(1);
+	hf->AddFrame(gEventNumber, new TGLayoutHints(kLHintsExpandX, 1, 1, 1, 1));
+
+	b1 = new TGPictureButton(hf, gClient->GetPicture(icondir + "GoForward.gif"));
+	hf->AddFrame(b1, new TGLayoutHints(kLHintsExpandX, 1, 1, 1, 1));
+	b1->Connect("Clicked()", "TVSDReader", this, "NextEvent()");
+      }
+
+
+      vf->AddFrame(hf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+    }
+
+    gf->AddFrame(vf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+    gf = new TGGroupFrame(frmMain, "Animate event");
+
+    hf = new TGHorizontalFrame(gf, 200, 20, kFixedWidth);
+    {
+
+      b1 = new TGPictureButton(hf, gClient->GetPicture(icondir + "ed_execute.png"));
+      hf->AddFrame(b1, new TGLayoutHints(kLHintsExpandX, 1, 1, 1, 1));
+      b1->Connect("Clicked()", "TVSDReader", this, "StartAnimation()");
+
+      b1 = new TGPictureButton(hf, gClient->GetPicture(icondir + "ed_interrupt.png"));
+      hf->AddFrame(b1, new TGLayoutHints(kLHintsExpandX, 1, 1, 1, 1));
+      b1->Connect("Clicked()", "TVSDReader", this, "StopAnimation()");
+
+    }
+
+    gf->AddFrame(hf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+    frmMain->AddFrame(gf);
+
+    gf = new TGGroupFrame(frmMain, "Teacher Controls");
+
+    vf = new TGVerticalFrame(gf, 200, 20, kFixedWidth);
+
+    {
+
+      b = new TGTextButton(vf,"Activate V0 finder");
+      vf->AddFrame(b, new TGLayoutHints(kLHintsExpandX, 1, 1, 1, 1));
+      b->Connect("Clicked()", "TVSDReader", this, "ActivateV0Finder()");
+
+    }
+
+    gf->AddFrame(vf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+//    frmMain->AddFrame(gf);
+
+
+    gf = new TGGroupFrame(frmMain, "Get Files");
+
+    vf = new TGVerticalFrame(gf, 200, 20, kFixedWidth);
+    {
+
+      hf = new TGHorizontalFrame(vf, 200, 20, kFixedWidth);
+      {
+
+        TGHorizontalFrame *hframe = new TGHorizontalFrame(hf, 40, 20, kFixedWidth);
+        {
+
+          b = new TGTextButton(hframe, "1");
+          b->Connect("Clicked()", "TVSDReader", this, "LoadHist1()");
+          hframe->AddFrame(b, new TGLayoutHints(kLHintsExpandX));
+
+          b = new TGTextButton(hframe, "2");
+          b->Connect("Clicked()", "TVSDReader", this, "LoadHist2()");
+          hframe->AddFrame(b, new TGLayoutHints(kLHintsExpandX));
+
+        }
+
+        hf->AddFrame(hframe);//, new TGLayoutHints(kLHintsExpandX));
+
+        hframe = new TGHorizontalFrame(hf, 160, 20, kFixedWidth);
+        {
+
+          fLoadDir = new TGComboBox(hframe);
+          fLoadDir->AddEntry("K0s", 1);
+          fLoadDir->AddEntry("Lambda", 2);
+          fLoadDir->AddEntry("antiLambda", 3);
+          fLoadDir->AddEntry("Phi", 4);
+          fLoadDir->AddEntry("V0", 5);
+          fLoadDir->Resize(100,20);
+          hframe->AddFrame(fLoadDir, new TGLayoutHints(kLHintsExpandX));
+        }
+
+        hf->AddFrame(hframe, new TGLayoutHints(kLHintsExpandX));
+
+      }
+        
+      vf->AddFrame(hf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+      hf = new TGHorizontalFrame(vf, 200, 20, kFixedWidth);
+      {
+
+        TGHorizontalFrame* hframe = new TGHorizontalFrame(hf, 40, 20, kFixedWidth);
+        {
+
+          b = new TGTextButton(hframe, "3");
+          b->Connect("Clicked()", "TVSDReader", this, "LoadHist3()");
+          hframe->AddFrame(b, new TGLayoutHints(kLHintsExpandX));
+
+          b = new TGTextButton(hframe, "4");
+          b->Connect("Clicked()", "TVSDReader", this, "LoadHist4()");
+          hframe->AddFrame(b, new TGLayoutHints(kLHintsExpandX));
+
+        }
+
+        hf->AddFrame(hframe);//, new TGLayoutHints(kLHintsExpandX));
+
+        hframe = new TGHorizontalFrame(hf, 160, 20, kFixedWidth);
+        {
+
+          fTeacherName = new TGTextEntry(hframe, "Teacher");
+          fTeacherName->SetEnabled(kTRUE);
+          fTeacherName->SetAlignment(kTextCenterX);
+          hframe->AddFrame(fTeacherName, new TGLayoutHints(kLHintsExpandX));
+
+        }
+
+        hf->AddFrame(hframe, new TGLayoutHints(kLHintsExpandX));
+
+      }
+        
+      vf->AddFrame(hf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+    }
+
+    gf->AddFrame(vf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+    frmMain->AddFrame(gf);
+
+    gf = new TGGroupFrame(frmMain, "Fit");
+
+    vf = new TGVerticalFrame(gf, 200, 20, kFixedWidth);
+    {
+
+      hf = new TGHorizontalFrame(vf, 200, 20, kFixedWidth);
+      {
+
+        fFitRangePoly = new TEveGDoubleValuator(hf,"Bkg range:", 40, 0);
+        fFitRangePoly->SetNELength(5);
+        fFitRangePoly->SetLabelWidth(70);
+        fFitRangePoly->Build();
+        fFitRangePoly->GetSlider()->SetWidth(190);
+        fFitRangePoly->SetLimits(0.0, 2.0, TGNumberFormat::kNESRealThree);
+        fFitRangePoly->SetValues(0.0, 2.0, TGNumberFormat::kNESRealThree);
+
+        hf->AddFrame(fFitRangePoly, new TGLayoutHints(kLHintsExpandX));
+
+      }
+
+      vf->AddFrame(hf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 5, 5, 5, 5));
+
+      hf = new TGHorizontalFrame(vf, 200, 20, kFixedWidth);
+      {
+
+        fFitRangeGaus = new TEveGDoubleValuator(hf,"Sig range:", 40, 0);
+        fFitRangeGaus->SetNELength(5);
+        fFitRangeGaus->SetLabelWidth(70);
+        fFitRangeGaus->Build();
+        fFitRangeGaus->GetSlider()->SetWidth(190);
+        fFitRangeGaus->SetLimits(0.0, 2.0, TGNumberFormat::kNESRealThree);
+        fFitRangeGaus->SetValues(0.0, 2.0, TGNumberFormat::kNESRealThree);
+
+        hf->AddFrame(fFitRangeGaus, new TGLayoutHints(kLHintsExpandX));
+
+      }
+
+      vf->AddFrame(hf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 5, 5, 5, 5));
+
+        hf = new TGHorizontalFrame(vf, 200, 20, kFixedWidth);
+        {
+            b = new TGTextButton(hf, "Fit signal+background");
+            b->Connect("Clicked()", "TVSDReader", this, "FitInvariantMass()");
+            hf->AddFrame(b, new TGLayoutHints(kLHintsExpandX));
+        }
+        
+        vf->AddFrame(hf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY, 5, 5, 5, 5));
+        
+    }
+
+    gf->AddFrame(vf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+    frmMain->AddFrame(gf);
+
+    gf = new TGGroupFrame(frmMain, "Encyclopaedia");
+
+    vf = new TGVerticalFrame(gf, 200, 20, kFixedWidth);
+    {
+
+      b = new TGTextButton(vf, "ALICE Detector");
+      b->Connect("Clicked()", "TVSDReader", this, "DetectorInfo()");
+      vf->AddFrame(b, new TGLayoutHints(kLHintsExpandX, 1, 1, 1, 1));
+
+      b = new TGTextButton(vf, "V0 Patterns");
+      b->Connect("Clicked()", "TVSDReader", this, "PatternInfo()");
+      vf->AddFrame(b, new TGLayoutHints(kLHintsExpandX, 1, 1, 1, 1));
+    }
+
+    gf->AddFrame(vf, new TGLayoutHints(kLHintsExpandX | kLHintsCenterY));
+
+    frmMain->AddFrame(gf);
+
+    vf = new TGVerticalFrame(frmMain, 150, 150, kFixedWidth);
+    {
+
+      b1 = new TGPictureButton(vf, gClient->GetPicture("eve_files/ALICE_logo_scaled.png"));
+      vf->AddFrame(b1);
+
+    }
+
+    frmMain->AddFrame(vf);
+
+    frmMain->MapSubwindows();
+    frmMain->Resize();
+    frmMain->MapWindow();
+
+    browser->StopEmbedding("Teacher");
+
+    browser->GetTabRight()->SetTab(1);
+
+
+    browser->StartEmbedding(TRootBrowser::kBottom);
+
+    frmMain = new TGMainFrame(gClient->GetRoot(), 1000, 600, kHorizontalFrame);
+    frmMain->SetWindowName("XX GUI");
+    frmMain->SetCleanup(kDeepCleanup);
+
+    const TGFont *font = gClient->GetFont("-*-helvetica-bold-r-normal-*-20-*-*-*-*-*-*-*");
+    FontStruct_t buttonFont = font->GetFontStruct();
+
+    gClient->GetColorByName("navy", buttonRedColor);
+    b = new TGTextButton(frmMain,"Student Mode");
+    b->SetTextColor(buttonRedColor);
+    b->SetFont(buttonFont);
+    b->Connect("Clicked()", "TVSDReader", this, "ToStudent()");
+
+    frmMain->AddFrame(b, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY , 1, 1, 1, 1));
+
+    gClient->GetColorByName("red", buttonRedColor);
+    b = new TGTextButton(frmMain,"Exit");
+    b->SetTextColor(buttonRedColor);
+    b->SetFont(buttonFont);
+    b->Connect("Clicked()", "TApplication", gApplication, "Terminate()");
+
+    frmMain->AddFrame(b, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY , 1, 1, 1, 1));
+    frmMain->MapSubwindows();
+    frmMain->Resize();
+    frmMain->MapWindow();
+
+    browser->StopEmbedding(" ");
+
+  }
+
+  void GetResult1() { GetResult(1); }
+  void GetResult2() { GetResult(2); }
+  void GetResult3() { GetResult(3); }
+  void GetResult4() { GetResult(4); }
+  void GetResult5() { GetResult(5); }
+  void GetResult6() { GetResult(6); }
+  void GetResult7() { GetResult(7); }
+  void GetResult8() { GetResult(8); }
+
+  void GetResult(Int_t a)
+  {
+
+    TString icondir(TString::Format("%s/icons/", gSystem->Getenv("ROOTSYS")) );
+
+    TGFileInfo fi;
+    fi.fFileTypes   = gMasterClassOutputPictue;
+    fi.fIniDir      = StrDup("");
+    fi.fFileTypeIdx = 0;
+    fi.fOverwrite   = kTRUE;
+    new TGFileDialog(gClient->GetDefaultRoot(),gEve->GetMainWindow(), kFDOpen, &fi);
+    if (!fi.fFilename) return;
+
+    TPMERegexp filere(".*/([^/]+$)");
+
+    gSystem->ChangeDirectory(fi.fIniDir);
+
+    switch(a)
+    {
+      case 1:
+        fResultButton1->SetPicture(gClient->GetPicture(icondir + "listview.xpm"));
+        fResultButton1->DoRedraw();
+        fResultPicture1 = fi.fFilename;
+        break;
+      case 2:
+        fResultButton2->SetPicture(gClient->GetPicture(icondir + "listview.xpm"));
+        fResultButton2->DoRedraw();
+        fResultPicture2 = fi.fFilename;
+        break;
+      case 3:
+        fResultButton3->SetPicture(gClient->GetPicture(icondir + "listview.xpm"));
+        fResultButton3->DoRedraw();
+        fResultPicture3 = fi.fFilename;
+        break;
+      case 4:
+        fResultButton4->SetPicture(gClient->GetPicture(icondir + "listview.xpm"));
+        fResultButton4->DoRedraw();
+        fResultPicture4 = fi.fFilename;
+        break;
+      case 5:
+        fResultButton5->SetPicture(gClient->GetPicture(icondir + "listview.xpm"));
+        fResultButton5->DoRedraw();
+        fResultPicture5 = fi.fFilename;
+        break;
+      case 6:
+        fResultButton6->SetPicture(gClient->GetPicture(icondir + "listview.xpm"));
+        fResultButton6->DoRedraw();
+        fResultPicture6 = fi.fFilename;
+        break;
+      case 7:
+        fResultButton7->SetPicture(gClient->GetPicture(icondir + "listview.xpm"));
+        fResultButton7->DoRedraw();
+        fResultPicture7 = fi.fFilename;
+        break;
+      case 8:
+        fResultButton8->SetPicture(gClient->GetPicture(icondir + "listview.xpm"));
+        fResultButton8->DoRedraw();
+        fResultPicture8 = fi.fFilename;
+        break;
+      default: break;
+    }
+  }
+
+  void ActivateV0Finder()
+  {
+
+    gSystem->Setenv("MASTERCLASS_V0_FINDER_ON","1");
+
+  }
+
+
+  void AttachEvent()
+  {
+    // Attach event data from current directory.
+
+    fVSD->LoadTrees();
+    fVSD->SetBranchAddresses();
+  }
+
+  void DropEvent()
+  {
+    // Drup currently held event data, release current directory.
+
+    // Drop old visualization structures.
+
+//    gEve->GetViewers()->DeleteAnnotations();
+    gEve->GetCurrentEvent()->DestroyElements();
+
+    // Drop old event-data.
+
+    fVSD->DeleteTrees();
+    delete fDirectory;
+    fDirectory = 0;
+  }
+
+  //---------------------------------------------------------------------------
+  // Event navigation
+  //---------------------------------------------------------------------------
+
+  void NextEvent()
+  {
+    if(fCurEv == fMaxEv-1)
+      GotoEvent(0);
+    else
+      GotoEvent(fCurEv + 1);
+
+  }
+
+  void PrevEvent()
+  {
+    if(fCurEv == 0)
+      GotoEvent(fMaxEv-1);
+    else
+      GotoEvent(fCurEv - 1);
+
+  }
+
+  void LoadEvent(Int_t ev)
+  {
+
+    DropEvent();
+
+    // Connect to new event-data.
+
+    fCurEv = ev;
+    fDirectory = (TDirectory*) ((TKey*) fEvDirKeys->At(fCurEv))->ReadObj();
+
+    //      if(fVSD && fDirectory)
+    fVSD->SetDirectory(fDirectory);
+
+    AttachEvent();
+
+  }
+
+  Bool_t GotoEvent(Int_t ev)
+  {
+      
+    change = kTRUE;
+
+    if (ev < 0 || ev >= fMaxEv)
+      {
+	Warning("GotoEvent", "Invalid event id %d.", ev);
+	return kFALSE;
+      }
+
+    if(fTimer)
+      fTimer->Stop();
+
+    if(fRAnim)
+      fRAnim=0;
+
+    DropEvent();
+    // Connect to new event-data.
+
+    fCurEv = ev;
+    fDirectory = (TDirectory*) ((TKey*) fEvDirKeys->At(fCurEv))->ReadObj();
+
+    if(fVSD && fDirectory)
+      fVSD->SetDirectory(fDirectory);
+
+    AttachEvent();
+
+    if(gEventNumber)
+      gEventNumber->SetText(TString::Format("%i / %i",fCurEv+1,fMaxEv));
+
+    return kTRUE;
+
+  }
+
+  void LoadV0s()
+  {
+
+    if(fVSD->fTreeV0)
+      {
+
+	TEveRecTrack  rcPos;
+	TEveRecTrack  rcNeg;
+	TEveRecTrack  rcMother;
+	TEveRecTrack  rcPointing;
+	Int_t pdg;
+	Double_t massN, massP, momentum;
+
+	if (fTrackListV0Neg == 0)
+	  {
+	    fTrackListV0Neg = new TEveTrackList("V0 Tracks Neg"); 
+	    fTrackListV0Neg->SetMainColor(kGreen-4);
+	    fTrackListV0Neg->SetMarkerColor(kYellow);
+	    fTrackListV0Neg->SetMarkerStyle(10);
+
+	    fTrackListV0Neg->SetMarkerSize(5);
+
+	    fTrackListV0Neg->IncDenyDestroy();
+	  }
+	else
+	  {
+	    fTrackListV0Neg->DestroyElements();
+	  }
+
+	if (fTrackListV0Pos == 0)
+	  {
+	    fTrackListV0Pos = new TEveTrackList("V0 Tracks Pos"); 
+	    fTrackListV0Pos->SetMainColor(2);
+	    fTrackListV0Pos->SetMarkerColor(kYellow);
+	    fTrackListV0Pos->SetMarkerStyle(10);
+	    fTrackListV0Pos->SetMarkerSize(5);
+
+	    fTrackListV0Pos->IncDenyDestroy();
+	  }
+	else
+	  {
+	    fTrackListV0Pos->DestroyElements();
+	  }
+
+	if (fTrackListV0Mother == 0)
+	  {
+	    fTrackListV0Mother = new TEveTrackList("V0 Mother Tracks"); 
+	    fTrackListV0Mother->SetMainColor(kSpring+6);
+	    fTrackListV0Mother->SetMarkerColor(kSpring+6);
+	    fTrackListV0Mother->SetMarkerStyle(10);
+	    fTrackListV0Mother->SetMarkerSize(5);
+
+	    fTrackListV0Mother->IncDenyDestroy();
+	  }
+	else
+	  {
+	    fTrackListV0Mother->DestroyElements();
+	  }
+
+	if (fPsV0 == 0)
+	  {
+	    fPsV0 = new TEvePointSet();
+	    fPsV0->SetMainColor(14);
+	    fPsV0->SetMarkerSize(0.5);
+	    fPsV0->SetMarkerStyle(2);
+	    fPsV0->IncDenyDestroy();
+	  }
+	else
+	  {
+	    fPsV0->Reset();
+	  }
+
+	TEveTrackPropagator* trkProp = fTrackListV0Neg->GetPropagator();
+	trkProp->SetMagField(0.5);
+	trkProp->SetMaxR(600); //R[cm]
+
+	TEveTrackPropagator* trkProp2 = fTrackListV0Mother->GetPropagator();
+	trkProp2->SetMagField(0.5);
+
+	Int_t nV0s = fVSD->fTreeV0->GetEntries();
+	nV0Tracks = nV0s;
+
+	fVSD->fTreeR->GetEntry(0);
+	Int_t nCascades = fVSD->fR.fIndex;//fVSD->fTreeR->GetEntry(0);001-0.985750-4.389611
+
+	nCascadeTracks = nCascades;
+
+	Int_t n = 0;
+
+	TEvePointSelector ss(fVSD->fTreeV0, fPsV0, "fVCa.fX:fVCa.fY:fVCa.fZ");
+	ss.Select();
+	fPsV0->SetTitle("V0_CA_Points");
+
+	for(Int_t i=nCascades; i<nV0s; i++)
+	  {
+
+	    fVSD->fTreeV0->GetEntry(n);
+
+	    pdg = fVSD->fV0.fPdg;
+
+	    switch (pdg)
+	      {
+	      case 0:
+		massN = gMassElecton;
+		massP = gMassElecton;
+		break;
+	      case 310:
+		massN = gMassPion;
+		massP = gMassPion;
+		break;
+	      case 3122:
+		massN = gMassPion;
+		massP = gMassProton;
+		break;
+	      case -3122:
+		massN = gMassProton;
+		massP = gMassPion;
+		break;
+	      default:
+		massN = gMassPion;
+		massP = gMassPion;
+		break;
+	      }
+
+	    rcNeg.fP.Set(fVSD->fV0.fPNeg);
+	    rcNeg.fV.Set(fVSD->fV0.fVNeg);
+	    rcNeg.fStatus = fVSD->fV0.fStatus;
+	    rcNeg.fLabel = fVSD->fV0.fDLabel[0];
+	    momentum = fVSD->fV0.fPNeg.Mag();
+	    rcNeg.fBeta = momentum/TMath::Sqrt(momentum*momentum + TMath::C()*TMath::C()*massN*massN);
+	    rcNeg.fSign = -1;
+
+	    rcPos.fP.Set(fVSD->fV0.fPPos);
+	    rcPos.fV.Set(fVSD->fV0.fVPos);
+	    rcPos.fStatus = fVSD->fV0.fStatus;
+	    rcPos.fLabel = fVSD->fV0.fDLabel[1];
+	    momentum = fVSD->fV0.fPPos.Mag();
+	    rcPos.fBeta = momentum/TMath::Sqrt(momentum*momentum + TMath::C()*TMath::C()*massP*massP);
+	    rcPos.fSign = 1;
+
+	    TEveTrack* track1 = new TEveTrack(&rcNeg, trkProp);
+	    track1->SetName(TString::Format("V0_Track_Neg_%d", n));
+	    track1->SetAttLineAttMarker(fTrackListV0Neg);
+
+	    pxNeg[n]=track1->GetMomentum().fX;
+	    pyNeg[n]=track1->GetMomentum().fY;
+	    pzNeg[n]=track1->GetMomentum().fZ;
+	    
+	    
+	    massNegCas[n]=massN;
+	    
+
+	    TEveTrack* track2 = new TEveTrack(&rcPos, trkProp);
+	    track2->SetName(TString::Format("V0_Track_Pos_%d", n));
+	    track2->SetAttLineAttMarker(fTrackListV0Pos);
+
+	    pxPos[n]=track2->GetMomentum().fX;
+	    pyPos[n]=track2->GetMomentum().fY;
+	    pzPos[n]=track2->GetMomentum().fZ;
+	    massPos[n]=massP;
+
+	    pcaX[n] = fVSD->fV0.fVCa.fX;
+	    pcaY[n] = fVSD->fV0.fVCa.fY;
+	    pcaZ[n] = fVSD->fV0.fVCa.fZ;
+
+	    momentum = TMath::Sqrt((pxNeg[n]+pxPos[n])*(pxNeg[n]+pxPos[n])
+					    +(pyNeg[n]+pyPos[n])*(pyNeg[n]+pyPos[n])+(pyNeg[n]+pyPos[n])*(pyNeg[n]+pyPos[n]));
+	    Double_t direction[3] = {(pxNeg[n]+pxPos[n])/momentum, (pyNeg[n]+pyPos[n])/momentum, (pzNeg[n]+pzPos[n])/momentum};
+
+	    pointingLine[n] = new TEveLine(TString::Format("V0_Pointing_Line_%d", n));
+	    pointingLine[n]->SetPoint(0, 0.0, pcaY[n]-pcaX[n]*direction[1]/direction[0], pcaZ[n]-pcaX[n]*direction[2]/direction[0]);
+	    pointingLine[n]->SetPoint(1, pcaX[n], pcaY[n], pcaZ[n]);
+	    pointingLine[n]->SetLineColor(kSpring+6);
+	    pointingLine[n]->SetLineWidth(2);
+	    pointingLine[n]->SetLineStyle(2);
+	    gEve->AddElement(pointingLine[n]);
+
+	    fTrackListV0Pos->AddElement(track2);
+	    fTrackListV0Neg->AddElement(track1);
+
+	    n++;
+
+	  }
+
+	fTrackListV0Pos->MakeTracks();
+	fTrackListV0Neg->MakeTracks();
+
+	gEve->AddElement(fPsV0);
+	gEve->AddElement(fTrackListV0Pos);
+	gEve->AddElement(fTrackListV0Neg);
+
+	TEveElement* top = gEve->GetCurrentEvent();
+
+      }
+
+  }
+
+  ClassDef(TVSDReader, 0);
+};
+
+TVSDReader* gVSDReader = 0;
+
+
+// Forward declaration.
+//void make_gui(Int_t mode);
+
+//______________________________________________________________________________
+void alice_vsd(Int_t choice, Int_t mode, Int_t dataset)
+{
+
+  const char* vsd_file_name = NULL;
+
+ // globalName1 = name1;
+ // globalName2 = name2;
+
+    switch(dataset)
+    {
+
+    case 1:
+      vsd_file_name = "eve_files/data/AliVSD_MasterClass_5.root";
+      break;
+
+    case 2:
+      vsd_file_name = "eve_files/data/AliVSD_MasterClass_8.root";
+      break;
+
+    }
+
+
+ // vsd_file_name = "AliVSD.root";
+
+  globalChoice = choice;
+  globalMode = mode;
+  globalDataset = dataset;
+
+  // Main function, initializes the application.
+  //
+  // 1. Load the auto-generated library holding ESD classes and ESD dictionaries.
+  // 2. Open ESD data-files.
+  // 3. Load cartoon geometry.
+  // 4. Spawn simple GUI.
+  // 5. Load first event.
+
+ TFile::SetCacheFileDir(".");
+
+  TEveVSD::DisableTObjectStreamersForVSDStruct();
+
+  TEveManager::Create(kTRUE,"FV");
+
+
+  // Final stuff
+  //=============
+
+//  gEve->GetViewers()->SwitchColorSet();
+//  gEve->GetDefaultGLViewer()->SetStyle(TGLRnrCtx::kOutline);
+
+  //   make_gui(mode);
+
+  gVSDReader = new TVSDReader(vsd_file_name);
+
+  gVSDReader->fTimer = new TTimer();
+ // gVSDReader->fTimer->Connect("Timeout()", "TVSDReader", gVSDReader, "AnimateEsdTracks()");
+
+  TEveBrowser* browser = gEve->GetBrowser();
+
+  browser->GetTabLeft()->RemoveTab(1);
+  browser->GetTabLeft()->RemoveTab(0);
+ 
+  //   browser->StartEmbedding(TRootBrowser::kRight);
+
+  gStyle->SetOptStat("e");
+//  gStyle->SetOptFit(1111);
+  gStyle->SetOptFit(0);
+  gStyle->SetCanvasColor(0);
+  gStyle->SetPalette(1);
+
+  //   TCanvas* pad = new TCanvas();
+  //   pad->Divide(2, 2);
+
+  //   pad->cd(1);
+  gKMinvHist = new TH1D("Statistics","Kaons",50,0.0,2.0);
+  gKMinvHist->SetLineColor(2);
+  gKMinvHist->GetXaxis()->SetTitle("Invariant Mass (GeV/c^{2})");
+  gKMinvHist->GetYaxis()->SetTitle("Counts");
+  gKMinvHist->SetFillColor(0);
+  //   gKMinvHist->Draw();
+
+  //   pad->cd(2);
+  gXMinvHist = new TH1D("Statistics","Xis",50,0.0,2.0);
+  gXMinvHist->SetLineColor(3);
+  gXMinvHist->GetXaxis()->SetTitle("Invariant Mass (GeV/c^{2})");
+  gXMinvHist->GetYaxis()->SetTitle("Counts");
+  gXMinvHist->SetFillColor(0);
+  //   gXMinvHist->Draw();
+
+  //   pad->cd(3);
+  gLMinvHist = new TH1D("Statistics","Lambdas",50,0.0,2.0);
+  gLMinvHist->SetLineColor(4);
+  gLMinvHist->GetXaxis()->SetTitle("Invariant Mass (GeV/c^{2})");
+  gLMinvHist->GetYaxis()->SetTitle("Counts");
+  gLMinvHist->SetFillColor(0);
+  //   gLMinvHist->Draw();
+
+  //   pad->cd(4);
+  gALMinvHist = new TH1D("Statistics","Anti-Lambdas",50,0.0,2.0);
+  gALMinvHist->SetLineColor(9);
+  gALMinvHist->GetXaxis()->SetTitle("Invariant Mass (GeV/c^{2})");
+  gALMinvHist->GetYaxis()->SetTitle("Counts");
+  gALMinvHist->SetFillColor(0);
+  //   gALMinvHist->Draw();
+
+  gAllMinvHist = new TH1D("Statistics","Invariant Mass - final result",20,0.0,2.0);
+  gAllMinvHist->GetXaxis()->SetTitle("Invariant Mass (GeV/c^{2})");
+  gAllMinvHist->GetYaxis()->SetTitle("Counts");
+  gAllMinvHist->SetFillColor(0);
+
+  gEve->AddEvent(new TEveEventManager("Event", "ALICE VSD Event"));
+
+  if(mode == 3)
+    {
+      teacher = kTRUE;
+    // gVSDReader->ToTeacher();
+    }
+  else
+    {
+//      gVSDReader->StudentSet();
+      gVSDReader->ToStudent();
+      gVSDReader->GotoEvent(0);
+    }
+ // gEve->GetWindowManager()->HideAllEveDecorations();
+//  gEve->Redraw3D(kTRUE); // Reset camera after the first event has been shown.
+
+}
